@@ -6,7 +6,10 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import uvicorn
+
+# Only import uvicorn when not in serverless environment
+if not os.getenv("VERCEL") and not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    import uvicorn
 
 from services.matching import MatchingService
 from services.document_processor import DocumentProcessor
@@ -349,5 +352,7 @@ async def upload_and_match(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Only run uvicorn if not in serverless environment
+    if not os.getenv("VERCEL") and not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        uvicorn.run(app, host="0.0.0.0", port=8000)
 
