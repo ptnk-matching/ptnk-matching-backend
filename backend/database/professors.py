@@ -10,10 +10,17 @@ class ProfessorDatabase:
     
     def __init__(self, data_file: str = None):
         """Initialize professor database."""
+        # Check if running in serverless environment (Vercel/Lambda)
+        is_serverless = os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT")
+        
         if data_file is None:
-            # Default to data/professors.json
-            base_dir = Path(__file__).parent.parent.parent
-            data_file = os.path.join(base_dir, "data", "professors.json")
+            if is_serverless:
+                # In serverless, don't try to use file path
+                data_file = None
+            else:
+                # Default to data/professors.json for local development
+                base_dir = Path(__file__).parent.parent.parent
+                data_file = os.path.join(base_dir, "data", "professors.json")
         
         self.data_file = data_file
         self._professors = []
@@ -21,13 +28,22 @@ class ProfessorDatabase:
     
     def _load_professors(self):
         """Load professors from JSON file."""
+        # Check if running in serverless environment
+        is_serverless = os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT")
+        
+        # In serverless, always use default professors
+        if is_serverless or self.data_file is None:
+            self._professors = self._get_default_professors()
+            print("Using default professors (serverless environment)")
+            return
+        
+        # Try to load from file for local development
         try:
             if os.path.exists(self.data_file):
                 with open(self.data_file, 'r', encoding='utf-8') as f:
                     self._professors = json.load(f)
             else:
-                # In serverless environment (Vercel), use default professors
-                # Don't try to create/save file as filesystem is read-only
+                # File not found, use defaults
                 self._professors = self._get_default_professors()
                 print(f"Using default professors (file not found: {self.data_file})")
         except (OSError, IOError, PermissionError) as e:

@@ -5,6 +5,9 @@ This file is used when deploying to Vercel.
 import sys
 import os
 
+# Mark as serverless environment early
+os.environ['VERCEL'] = '1'
+
 # Add backend directory to path
 backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
 sys.path.insert(0, backend_path)
