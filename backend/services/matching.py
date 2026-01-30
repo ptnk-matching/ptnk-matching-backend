@@ -3,7 +3,6 @@ import os
 from typing import List, Dict
 import numpy as np
 from openai import OpenAI
-from sklearn.metrics.pairwise import cosine_similarity
 
 try:
     from dotenv import load_dotenv
@@ -303,11 +302,12 @@ Hãy đưa ra phân tích ngắn gọn:"""
             print(f"Error getting query embedding: {e}")
             return []
         
-        # Calculate cosine similarity
-        similarities = cosine_similarity(
-            query_embedding,
-            self._professor_embeddings
-        )[0]
+        # Calculate cosine similarity using numpy (replaces sklearn)
+        # Normalize embeddings
+        query_norm = query_embedding / np.linalg.norm(query_embedding)
+        embeddings_norm = self._professor_embeddings / np.linalg.norm(self._professor_embeddings, axis=1, keepdims=True)
+        # Compute cosine similarity: dot product of normalized vectors
+        similarities = np.dot(query_norm, embeddings_norm.T)[0]
         
         # Get top k matches
         top_indices = np.argsort(similarities)[::-1][:top_k]
