@@ -24,3 +24,6 @@ except Exception as e:
     logging.error(f"Error initializing app: {e}")
     handler = None
 
+# Export handler for Vercel
+__all__ = ['handler']
+
