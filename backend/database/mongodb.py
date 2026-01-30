@@ -31,6 +31,15 @@ class MongoDB:
                     else:
                         connection_string += '?retryWrites=true&w=majority'
                 
+                # For mongodb+srv://, SSL/TLS is handled automatically
+                # Don't add tls parameter if using mongodb+srv://
+                # Only add for mongodb:// connections
+                if connection_string.startswith('mongodb://') and 'tls=' not in connection_string and 'ssl=' not in connection_string:
+                    if '?' in connection_string:
+                        connection_string += '&tls=true'
+                    else:
+                        connection_string += '?tls=true'
+                
                 # Use ServerApi version 1 (recommended by MongoDB Atlas)
                 cls._client = AsyncIOMotorClient(
                     connection_string,
