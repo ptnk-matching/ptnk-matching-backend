@@ -26,18 +26,32 @@ class ProfessorDatabase:
                 with open(self.data_file, 'r', encoding='utf-8') as f:
                     self._professors = json.load(f)
             else:
-                # Create default data file
+                # In serverless environment (Vercel), use default professors
+                # Don't try to create/save file as filesystem is read-only
                 self._professors = self._get_default_professors()
-                self._save_professors()
+                print(f"Using default professors (file not found: {self.data_file})")
+        except (OSError, IOError, PermissionError) as e:
+            # Read-only filesystem or permission error - use defaults
+            print(f"Error loading professors (read-only filesystem?): {e}")
+            self._professors = self._get_default_professors()
         except Exception as e:
             print(f"Error loading professors: {e}")
             self._professors = self._get_default_professors()
     
     def _save_professors(self):
         """Save professors to JSON file."""
-        os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
-        with open(self.data_file, 'w', encoding='utf-8') as f:
-            json.dump(self._professors, f, ensure_ascii=False, indent=2)
+        try:
+            # Skip saving in serverless environment (read-only filesystem)
+            if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+                print("Skipping save professors (serverless environment)")
+                return
+            
+            os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
+            with open(self.data_file, 'w', encoding='utf-8') as f:
+                json.dump(self._professors, f, ensure_ascii=False, indent=2)
+        except (OSError, IOError, PermissionError):
+            # Ignore write errors in read-only environments
+            print("Cannot save professors (read-only filesystem)")
     
     def get_all_professors(self) -> List[Dict]:
         """Get all professors."""
